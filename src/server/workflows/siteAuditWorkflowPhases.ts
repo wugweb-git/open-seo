@@ -73,7 +73,7 @@ export async function runAuditPhases(
     access,
   } = params;
   const origin = getOrigin(startUrl);
-  const { maxPages, excludePaths } = config;
+  const { maxPages, excludePaths, includePaths } = config;
 
   const discovery = await runDiscoveryPhase(step, {
     auditId,
@@ -86,7 +86,12 @@ export async function runAuditPhases(
   // Parsed outside the step from checkpointed text, so replays see the exact
   // robots rules the original run used (a live re-fetch could differ and
   // desync the frontier from already-persisted crawl batches).
-  const robots = parseRobotsTxt(origin, discovery.robotsText, excludePaths);
+  const robots = parseRobotsTxt(
+    origin,
+    discovery.robotsText,
+    excludePaths,
+    includePaths,
+  );
   const crawl = await runCrawlPhase(step, {
     ...params,
     origin,
@@ -128,14 +133,19 @@ async function runDiscoveryPhase(
   },
 ) {
   const { auditId, workflowInstanceId, origin, startUrl, access } = input;
-  const { maxPages, excludePaths } = input.config;
+  const { maxPages, excludePaths, includePaths } = input.config;
   // "-v2": the checkpoint shape changed (seeds now live in the scratchpad DO
   // instead of the step return). A pre-refactor instance replayed under this
   // code must re-run discovery — resuming from the old cached {sitemapUrls}
   // shape would leave the scratchpad empty and finalize a zero-page audit.
   return pgStep(step, "discover-urls-v2", DISCOVERY_STEP, async () => {
     const result = await discoverUrls(origin, maxPages, access);
-    const robots = parseRobotsTxt(origin, result.robotsText, excludePaths);
+    const robots = parseRobotsTxt(
+      origin,
+      result.robotsText,
+      excludePaths,
+      includePaths,
+    );
     const scratchpad = getAuditScratchpad(auditId);
 
     // Seeds go straight into the scratchpad frontier — nothing large is
@@ -376,7 +386,10 @@ async function finalizeAudit(args: {
       // Excluded pages are never read, so their links are unknown: a page
       // linked only from them would be reported as an orphan.
       completed:
-        crawl.completed && !hasUnreadShells && !config.excludePaths?.length,
+        crawl.completed &&
+        !hasUnreadShells &&
+        !config.excludePaths?.length &&
+        !config.includePaths?.length,
     });
     console.info("Audit link checks completed", {
       auditId,

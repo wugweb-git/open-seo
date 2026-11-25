@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertTitle } from "@/client/components/ui/alert";
 import { Button } from "@/client/components/ui/button";
@@ -28,9 +27,7 @@ import {
   isEveryAppClientAuthMode,
   isHostedClientAuthMode,
 } from "@/lib/auth-mode";
-import { PAID_MAX_AUDIT_PAGES } from "@/shared/audit-limits";
 import { renderingEstimateText } from "@/shared/audit-rendering";
-import { SUBSCRIBE_ROUTE } from "@/shared/billing";
 
 type Props = {
   launchForm: ReturnType<typeof useLaunchController>["launchForm"];
@@ -152,15 +149,9 @@ function LaunchOptions({
       </launchForm.Field>
       <FieldDescription>
         Enter any value from {MIN_PAGES} to {maxPagesLimit.toLocaleString()}.
-        {maxPagesLimit < PAID_MAX_AUDIT_PAGES ? (
-          <>
-            {" "}
-            <Link to={SUBSCRIBE_ROUTE} search={{ upgrade: true }}>
-              Upgrade
-            </Link>{" "}
-            to crawl up to {PAID_MAX_AUDIT_PAGES.toLocaleString()} pages.
-          </>
-        ) : null}
+        {" "}
+        Cloudflare's free plan allows 40 pages per audit; for a larger site,
+        run one audit per section.
       </FieldDescription>
     </Field>
   );

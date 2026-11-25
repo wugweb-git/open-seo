@@ -35,7 +35,10 @@ import { normalizeAndValidateStartUrl } from "@/server/lib/audit/url-policy";
 import { reconcileRunningAudit } from "@/server/features/audit/services/auditReconciler";
 import { isHostedServerAuthMode } from "@/server/lib/runtime-env";
 import { startWorkflow } from "@/server/lib/startWorkflow";
-import { findExcludingPath } from "@/shared/audit-exclude-paths";
+import {
+  findExcludingPath,
+  isOutsideIncludedPaths,
+} from "@/shared/audit-exclude-paths";
 
 // Free accounts keep bounded audit capacity; rendering reserves usage credits.
 async function resolveAuditLimitTier(
@@ -56,6 +59,7 @@ async function startAudit(input: {
   limitTier: AuditLimitTier;
   renderJavaScript?: boolean;
   excludePaths?: string[];
+  includePaths?: string[];
 }) {
   const renderJavaScript = input.renderJavaScript ?? false;
   if (renderJavaScript && !(await isAuditRenderingAllowed())) {
@@ -89,6 +93,13 @@ async function startAudit(input: {
       `The start URL is excluded by "${excludingPath}". Remove that path or start from a different URL.`,
     );
   }
+  const includePaths = Array.from(new Set(input.includePaths));
+  if (isOutsideIncludedPaths(includePaths, startUrl)) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "The start URL is outside the included paths. Start from a URL under one of them.",
+    );
+  }
   const credential = await CrawlerCredentialService.resolveCrawlerAccess(
     organizationId,
     input.projectId,
@@ -101,6 +112,7 @@ async function startAudit(input: {
     renderJavaScript,
     crawlerCredentialId: credential?.id,
     ...(excludePaths.length > 0 && { excludePaths }),
+    ...(includePaths.length > 0 && { includePaths }),
   };
 
   await AuditRepository.createAudit({

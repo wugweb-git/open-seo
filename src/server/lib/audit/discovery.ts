@@ -9,7 +9,10 @@ import { isCrawlableUrl } from "./url-policy";
 import { publicFetch } from "@/server/lib/public-fetch";
 import { createRateLimitWait, type RateLimitWait } from "./crawl-throttle";
 import type { CrawlerAccess } from "@/shared/crawler-access";
-import { findExcludingPath } from "@/shared/audit-exclude-paths";
+import {
+  findExcludingPath,
+  isOutsideIncludedPaths,
+} from "@/shared/audit-exclude-paths";
 import {
   auditRequestHeaders,
   CRAWL_USER_AGENT,
@@ -120,9 +123,11 @@ export function parseRobotsTxt(
   origin: string,
   text: string | null,
   excludePaths: readonly string[] = [],
+  includePaths: readonly string[] = [],
 ): RobotsResult {
   const isExcluded = (url: string) =>
-    findExcludingPath(excludePaths, url) !== undefined;
+    findExcludingPath(excludePaths, url) !== undefined ||
+    isOutsideIncludedPaths(includePaths, url);
   if (text === null) {
     return { isAllowed: (url) => !isExcluded(url), sitemapUrls: [] };
   }

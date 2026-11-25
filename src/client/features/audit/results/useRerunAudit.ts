@@ -27,6 +27,7 @@ export function useRerunAudit({
           lighthouseStrategy: audit.config.lighthouseStrategy,
           renderJavaScript,
           excludePaths: audit.config.excludePaths,
+          includePaths: audit.config.includePaths,
         },
       }),
     onSuccess: (result) => {

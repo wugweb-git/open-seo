@@ -27,19 +27,24 @@ import { useAuditCapabilities } from "@/client/features/audit/shared";
 import {
   excludePathsSchema,
   findExcludingPath,
+  includePathsSchema,
+  isOutsideIncludedPaths,
   splitExcludePathsInput,
 } from "@/shared/audit-exclude-paths";
 
 function getLaunchValidationErrors(
   value: LaunchFormValues,
   // Untouched fields stay quiet until the form is submitted.
-  validate: { url: boolean; excludePaths: boolean },
+  validate: { url: boolean; excludePaths: boolean; includePaths: boolean },
 ) {
   return createFormValidationErrors({
     fields: {
       url: !value.url.trim() && validate.url ? "Please enter a URL." : null,
       excludePathsInput: validate.excludePaths
         ? getExcludePathsError(value)
+        : null,
+      includePathsInput: validate.includePaths
+        ? getIncludePathsError(value)
         : null,
     },
   });
@@ -58,6 +63,21 @@ function getExcludePathsError(value: LaunchFormValues) {
   );
   return excludingPath
     ? `"${excludingPath}" excludes the URL the audit starts from.`
+    : null;
+}
+
+function getIncludePathsError(value: LaunchFormValues) {
+  const parsed = includePathsSchema.safeParse(
+    splitExcludePathsInput(value.includePathsInput),
+  );
+  if (!parsed.success) return parsed.error.issues[0].message;
+  const url = value.url.trim();
+  if (!url) return null;
+  return isOutsideIncludedPaths(
+    parsed.data,
+    /^https?:\/\//i.test(url) ? url : `https://${url}`,
+  )
+    ? "The URL the audit starts from is outside these paths."
     : null;
 }
 
@@ -98,9 +118,17 @@ export function useLaunchController({
             formApi,
             "excludePathsInput",
           ),
+          includePaths: shouldValidateFieldOnChange(
+            formApi,
+            "includePathsInput",
+          ),
         }),
       onSubmit: ({ value }) =>
-        getLaunchValidationErrors(value, { url: true, excludePaths: true }),
+        getLaunchValidationErrors(value, {
+          url: true,
+          excludePaths: true,
+          includePaths: true,
+        }),
     },
     onSubmit: async ({ formApi, value }) => {
       const effectiveMaxPages = commitMaxPagesInput(
@@ -123,6 +151,7 @@ export function useLaunchController({
           lighthouseStrategy: value.runLighthouse ? "auto" : "none",
           renderJavaScript: value.renderJavaScript,
           excludePaths: splitExcludePathsInput(value.excludePathsInput),
+          includePaths: splitExcludePathsInput(value.includePathsInput),
         });
         toast.success("Audit started!");
         onAuditStarted(result.auditId);
@@ -184,6 +213,7 @@ function useLaunchMutations({ projectId }: { projectId: string }) {
       lighthouseStrategy: "auto" | "none";
       renderJavaScript: boolean;
       excludePaths: string[];
+      includePaths: string[];
     }) => startAudit({ data }),
     onSuccess: () => {
       void invalidateHistory();

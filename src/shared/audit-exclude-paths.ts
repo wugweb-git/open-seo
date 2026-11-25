@@ -27,6 +27,9 @@ export const excludePathsSchema = z
     error: `You can exclude up to ${MAX_EXCLUDE_PATHS} paths.`,
   });
 
+/** Include patterns share the exclude pattern syntax. */
+export const includePathsSchema = excludePathsSchema;
+
 /** One pattern per line, as typed in the launch form. */
 export function splitExcludePathsInput(input: string): string[] {
   return input
@@ -69,4 +72,15 @@ export function findExcludingPath(
     return undefined;
   }
   return patterns.find((pattern) => matchesPattern(pattern, target));
+}
+
+/**
+ * True when an include list is set and the URL matches none of it. An empty
+ * list means "no restriction", so every URL is inside.
+ */
+export function isOutsideIncludedPaths(
+  patterns: readonly string[],
+  url: string,
+): boolean {
+  return patterns.length > 0 && findExcludingPath(patterns, url) === undefined;
 }

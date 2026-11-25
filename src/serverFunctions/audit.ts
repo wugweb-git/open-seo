@@ -39,6 +39,7 @@ export const startAudit = createServerFn({ method: "POST" })
       limitTier,
       renderJavaScript,
       excludePaths: data.excludePaths,
+      includePaths: data.includePaths,
     });
 
     waitUntil(

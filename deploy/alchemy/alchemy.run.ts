@@ -353,7 +353,7 @@ const resolveWorkerLimits = (stage: string, selfHost: boolean) =>
         ),
       ),
     );
-    if (accepted) return { limits: PAID_WORKER_LIMITS };
+    if (accepted && false) return { limits: PAID_WORKER_LIMITS };
     yield* Console.log(
       "Workers Free: deploying with the plan's default limits. Site audits and AI visibility need Workers Paid (docs/SELF_HOSTING_CLOUDFLARE.md).",
     );

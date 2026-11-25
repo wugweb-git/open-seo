@@ -35,7 +35,7 @@ export const AUDIT_LIMITS: Record<
     maxRunningAudits: Number.POSITIVE_INFINITY,
   },
   self_hosted: {
-    maxPagesPerAudit: PAID_MAX_AUDIT_PAGES,
+    maxPagesPerAudit: FREE_MAX_AUDIT_PAGES,
     maxCapacityUnits: Number.POSITIVE_INFINITY,
     maxRunningAudits: Number.POSITIVE_INFINITY,
   },

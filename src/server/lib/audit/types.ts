@@ -19,6 +19,8 @@ export interface AuditConfig {
   crawlerCredentialId?: string;
   /** Paths the crawl skips; see `@/shared/audit-exclude-paths`. */
   excludePaths?: string[];
+  /** When set, only URLs under these paths are crawled. Same syntax as excludePaths. */
+  includePaths?: string[];
 }
 
 // Read-side only (writes stringify a typed AuditConfig). Stored rows may hold
@@ -43,6 +45,7 @@ const auditConfigSchema = z.object({
   sitePlatform: z.literal("shopify").optional().catch(undefined),
   crawlerCredentialId: z.string().optional().catch(undefined),
   excludePaths: z.array(z.string()).optional().catch(undefined),
+  includePaths: z.array(z.string()).optional().catch(undefined),
 });
 
 const auditConfigCodec = jsonCodec(auditConfigSchema);

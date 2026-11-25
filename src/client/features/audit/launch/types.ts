@@ -2,13 +2,13 @@ import {
   DEFAULT_AUDIT_PAGES,
   FREE_MAX_AUDIT_PAGES,
   MIN_AUDIT_PAGES,
-  PAID_MAX_AUDIT_PAGES,
 } from "@/shared/audit-limits";
 
 export const MIN_PAGES = MIN_AUDIT_PAGES;
 
-export function getMaxPagesLimit(isFreePlan: boolean) {
-  return isFreePlan ? FREE_MAX_AUDIT_PAGES : PAID_MAX_AUDIT_PAGES;
+// This install runs on Cloudflare Workers Free, so every audit is capped.
+export function getMaxPagesLimit(_isFreePlan: boolean) {
+  return FREE_MAX_AUDIT_PAGES;
 }
 
 /** The page limit an audit runs with for what is typed in the form. */
@@ -26,6 +26,8 @@ export type LaunchFormValues = {
   renderJavaScript: boolean;
   /** One path pattern per line. */
   excludePathsInput: string;
+  /** One path pattern per line; empty means the whole site. */
+  includePathsInput: string;
 };
 
 export const DEFAULT_LAUNCH_FORM_VALUES: LaunchFormValues = {
@@ -34,4 +36,5 @@ export const DEFAULT_LAUNCH_FORM_VALUES: LaunchFormValues = {
   runLighthouse: false,
   renderJavaScript: false,
   excludePathsInput: "",
+  includePathsInput: "",
 };
